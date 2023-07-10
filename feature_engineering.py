@@ -1,16 +1,12 @@
 import numpy as np
 import pandas as pd
-from numba import jit
 
-# @jit(nopython=True)
 def rat(df, n):
     return (sum_up(df, "bid", n) - sum_up(df, "ask", n)) / (sum_up(df, "bid", n) + sum_up(df, "ask", n))
 
-# @jit(nopython=True)
 def rat_weighted(df, n):
     return (sum_up_weighted(df, "bid", n) + sum_up_weighted(df, "ask", n)) / (sum_up_weighted(df, "bid", n) - sum_up_weighted(df, "ask", n))
 
-# @jit(nopython=True)
 def sum_up(df, side, n):
     tot = df[f"{side}1_size"].copy()
     for i in range(2, n + 1):
@@ -27,7 +23,6 @@ def sum_up_weighted(df, side, n):
 # refresh: 5s | forecast: 5s
 def feature_engineer_15_dir(df):
     columns = ["bid1_price", "bid1_size", "ask1_price", "ask1_size", "bid2_price", "bid2_size", "ask2_price", "ask2_size", "trade_vol", "trade_num", "trade_num_buy", "trade_vol_buy", "trade_num_sell", "trade_vol_sell"]
-    # columns = ["bid1_size", "ask1_size", "bid2_size", "ask2_size", "trade_vol", "trade_num", "trade_num_buy", "trade_vol_buy", "trade_num_sell", "trade_vol_sell"]
     keys = []
 
     mid = (df["bid1_price"] + df["ask1_price"])/2
@@ -61,26 +56,6 @@ def feature_engineer_15_dir(df):
     df["rat3_ma5"] = df["rat3"].rolling(5).apply(np.mean)
     df["rat3_ma5_std"] = df["rat3"].rolling(5).apply(np.std)
     keys += ["rat1_ma5", "rat3_ma5", "rat3_ma5_std"]
-
-    # # total trades moving average
-    # df["trade_num_5"] = df["trade_num"].rolling(5).sum()
-    # df["trade_num_15"] = df["trade_num"].rolling(15).sum()
-    # df["trade_num_buy_5"] = df["trade_num_buy"].rolling(5).sum() 
-    # df["trade_num_buy_15"] = df["trade_num_buy"].rolling(15).sum()
-    # df["trade_num_sell_5"] = df["trade_num_sell"].rolling(5).sum() 
-    # df["trade_num_sell_15"] = df["trade_num_sell"].rolling(15).sum()
-    # keys += ["trade_num_5", "trade_num_15", "trade_num_buy_5", "trade_num_buy_15", "trade_num_sell_5", "trade_num_sell_15"]
-
-    # # average size per trade
-    # df["trade_avg_vol"] = df["trade_vol"] / df["trade_num"]
-    # df["trade_buy_avg_vol"] = df["trade_vol_buy"] / df["trade_num_buy"]
-    # df["trade_sell_avg_vol"] = df["trade_vol_sell"] / df["trade_num_sell"]
-    # df["trade_buy_sell_ratio"] = (df["trade_vol_buy"] - df["trade_vol_sell"]) / (df["trade_vol_buy"] + df["trade_vol_sell"])
-    # keys += ["trade_avg_vol", "trade_buy_avg_vol", "trade_sell_avg_vol", "trade_buy_sell_ratio"]
-    # df["trade_buy_sell_ratio_ma5"] = df["trade_buy_sell_ratio"].rolling(5).apply(np.mean)
-    # df["trade_buy_sell_ratio_ma15"] = df["trade_buy_sell_ratio"].rolling(15).apply(np.mean)
-    # df["trade_buy_sell_ratio_ma60"] = df["trade_buy_sell_ratio"].rolling(60).apply(np.mean)
-    # keys += ["trade_buy_sell_ratio_ma5", "trade_buy_sell_ratio_ma15", "trade_buy_sell_ratio_ma60"]
 
     # # ratio of volume versus orderbook liquidity
     df["trade_book_ratio"] = df["trade_vol"] / (df["bid20cum_size"] + df["ask20cum_size"])
@@ -188,41 +163,12 @@ def feature_engineer_15_vol(df):
     df["rat3_ma5_std"] = df["rat3"].rolling(5).apply(np.std)
     keys += ["rat1_ma5", "rat3_ma5", "rat3_ma5_std"]
 
-    # # total trades moving average
-    # df["trade_num_5"] = df["trade_num"].rolling(5).sum()
-    # df["trade_num_15"] = df["trade_num"].rolling(15).sum()
-    # df["trade_num_buy_5"] = df["trade_num_buy"].rolling(5).sum() 
-    # df["trade_num_buy_15"] = df["trade_num_buy"].rolling(15).sum()
-    # df["trade_num_sell_5"] = df["trade_num_sell"].rolling(5).sum() 
-    # df["trade_num_sell_15"] = df["trade_num_sell"].rolling(15).sum()
-    # keys += ["trade_num_5", "trade_num_15", "trade_num_buy_5", "trade_num_buy_15", "trade_num_sell_5", "trade_num_sell_15"]
-
-    # # average size per trade
-    # df["trade_avg_vol"] = df["trade_vol"] / df["trade_num"]
-    # df["trade_buy_avg_vol"] = df["trade_vol_buy"] / df["trade_num_buy"]
-    # df["trade_sell_avg_vol"] = df["trade_vol_sell"] / df["trade_num_sell"]
-    # df["trade_buy_sell_ratio"] = (df["trade_vol_buy"] - df["trade_vol_sell"]) / (df["trade_vol_buy"] + df["trade_vol_sell"])
-    # df["trade_buy_sell_ratio_ma5"] = df["trade_buy_sell_ratio"].rolling(5).apply(np.mean)
-    # keys += ["trade_avg_vol", "trade_buy_avg_vol", "trade_sell_avg_vol", "trade_buy_sell_ratio"]
-    # keys += ["trade_buy_sell_ratio_ma5"]
-
-    # # volume moving average
-    # df["trade_vol_5"] = df["trade_vol"].rolling(5).sum()
-    # df["trade_vol_15"] = df["trade_vol"].rolling(15).sum()
-    # df["trade_vol_60"] = df["trade_vol"].rolling(60).sum()
-    # keys += ["trade_vol_5", "trade_vol_15", "trade_vol_60"]
-
     # VWAP difference from current mid
     mid = (df["bid1_price"] + df["ask1_price"])/2
     df["MA9_diff"] = mid - mid.rolling(9).apply(np.mean)
     df["MA3_diff"] = mid - mid.rolling(3).apply(np.mean)
     df["MA30_diff"] = mid - mid.rolling(30).apply(np.mean)
     keys += ["MA9_diff", "MA3_diff", "MA30_diff"]
-
-    # # buy VWAP vs sell VWAP
-    # VWAP_buy_10 = (df["trade_vol_buy"] * df["ask1_price"]).rolling(10).sum() / df["trade_vol_buy"].rolling(10).sum()
-    # VWAP_sell_10 = (df["trade_vol_sell"] * df["bid1_price"]).rolling(10).sum() / df["trade_vol_sell"].rolling(10).sum()
-    # df["VWAP_buy_sell_diff"] = VWAP_buy_10 - VWAP_sell_10
 
     # # volatility
     mid1 = mid.apply(np.log).diff()

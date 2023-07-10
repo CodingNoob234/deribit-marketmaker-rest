@@ -1,6 +1,8 @@
 import math
 import numpy as np
 from numba import jit
+import logging
+LOGGER = logging.getLogger(__name__)
 
 @jit
 def get_quotes2(data, params):
@@ -17,7 +19,7 @@ def get_quotes2(data, params):
     order_buy = {}
     order_sell = {}
     
-    mid = .5 * (best_bid + best_ask)
+    mid = .5 * (best_bid + best_ask)    
     pos /= trade_qty
 
     s_b = (-1 - 2*pos) / ((1+params["max_position"])**2 - pos**2)

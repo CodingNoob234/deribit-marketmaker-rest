@@ -31,3 +31,4 @@ API_KEY_TEST = ''
 API_SECRET_TEST = ''
 
 TEST_EXCHANGE = False
+DRY_RUN = False

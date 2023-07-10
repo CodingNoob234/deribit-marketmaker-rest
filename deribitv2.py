@@ -1,6 +1,5 @@
 import time, requests
 import config
-
 from requests.structures import CaseInsensitiveDict
 
 import logging

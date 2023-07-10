@@ -29,8 +29,8 @@ MAX_POSITION = strategy_params["max_pos"]
 
 # paramters for refreshing orders and time series
 MIN_LOOP_TIME = .001
-WAVELEN_TIME_SERIES = 1 # wavelength to refresh time series from which volatility etc. are predicted
-WAVELEN_UPDATE_ORDERS = .5 # time to refresh orders, for this we need to replace two orders + request orderbook. I.e. costing 3 API requests, from which 2 matching engine. Allowed to refresh every .5 seconds
+WAVELEN_TIME_SERIES = 1. # wavelength to refresh time series from which volatility etc. are predicted
+WAVELEN_UPDATE_ORDERS = 1. # time to refresh orders, for this we need to replace two orders + request orderbook. I.e. costing 3 API requests, from which 2 matching engine. Allowed to refresh every .5 seconds
 WAVELEN_STATUS = 60
 RESTART_INTERVAL = 5
 BURN_IN = -100
@@ -41,7 +41,7 @@ class MarketMakingBot(DeriBit):
     vol_model = joblib.load(f"models/{INSTRUMENT}_model_1s_vol.joblib")
     
     def __init__(self):
-        super(MarketMakingBot, self).__init__(test = config.TEST_EXCHANGE)
+        super(MarketMakingBot, self).__init__()
         
         # get authorization for the first time
         self.getauth()
@@ -119,22 +119,6 @@ class MarketMakingBot(DeriBit):
         features_vol = features
         volatility = self.vol_model.predict(np.array(features_vol.iloc[-1]).reshape(1,-1))[0]
         return direction, volatility
-
-    # def validate_size(self, bid_order, ask_order, position):
-    #     if abs(position)<=MAX_POSITION - TRADE_QTY:
-    #         bid_order["size"] = TRADE_QTY
-    #         ask_order["size"] = TRADE_QTY
-    #     elif position > MAX_POSITION - TRADE_QTY:
-    #         bid_order["size"] = MAX_POSITION - position
-    #         if position >= MAX_POSITION:
-    #             bid_order["size"] = MIN_QTY
-    #         ask_order["size"] = TRADE_QTY
-    #     elif position < -MAX_POSITION + TRADE_QTY:
-    #         bid_order["size"] = TRADE_QTY
-    #         ask_order["size"] = abs(-MAX_POSITION - position)
-    #         if position <= - MAX_POSITION:
-    #             ask_order["size"] = MIN_QTY
-    #     return bid_order, ask_order
     
     def validate_price(self, bid_order, ask_order):
         bid_order["price"] = round(round(bid_order["price"]/self.tick)*self.tick, config_dict["sign"])
@@ -196,11 +180,9 @@ class MarketMakingBot(DeriBit):
             if started_at - last_time_refresh > WAVELEN_TIME_SERIES:
                 # get market data and own orders
                 last_time_refresh = started_at
+                index_price = self.get_index_price(config_dict["asset"].lower() + "_usd")["index_price"]
                 book = self.request_data(substract_own_orders=True)
                 direction, volatility = self.forecast()
-                
-                print(self.get_index_price(config_dict["assert"].lower() + "_usd"))
-
             # refresh quotes and replace them
             # the structure is, get: position, orders, book, replace orders
             if started_at - last_quote_refresh > WAVELEN_UPDATE_ORDERS:
@@ -212,7 +194,7 @@ class MarketMakingBot(DeriBit):
                     continue
 
                 # with all information above, compute bid/ask quotes
-                bid_order, ask_order = self.compute_quotes(data = {"book": book, "dir": direction, "vol": volatility, "pos": self.pos_p}, params = strategy_params)
+                bid_order, ask_order = self.compute_quotes(data = {"book": book, "dir": direction, "vol": volatility, "pos": self.pos_p, "index_price": index_price}, params = strategy_params)
                 # bid_order, ask_order = self.validate_size(bid_order, ask_order, position)
                 bid_order, ask_order = self.validate_price(bid_order, ask_order)
                 LOGGER.debug(f"volatility prediction: {str(round(volatility,12))}")
@@ -221,7 +203,8 @@ class MarketMakingBot(DeriBit):
                 LOGGER.debug(f"ask_order: {str(ask_order)}")
                 
                 # update orders as desired
-                self.update_quotes(bid_order, ask_order)
+                if not config.DRY_RUN:
+                    self.update_quotes(bid_order, ask_order)
 
             # refresh pnl
             if started_at - last_pos_refresh > WAVELEN_STATUS:
