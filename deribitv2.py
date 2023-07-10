@@ -1,8 +1,4 @@
-from functools import reduce
-from multiprocessing.dummy import current_process
-import time, hashlib, requests, base64, sys
-from collections import OrderedDict
-from pprint import pprint
+import time, requests
 import config
 
 from requests.structures import CaseInsensitiveDict

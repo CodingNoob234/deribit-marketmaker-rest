@@ -11,6 +11,7 @@ from marketstate import MarketState
 from feature_engineering import feature_functions
 from strategy import strategies
 from config import config_dict, strategy_params
+import config
 from simple_functions import *
 
 from configure_logger import configure_logger
@@ -40,7 +41,7 @@ class MarketMakingBot(DeriBit):
     vol_model = joblib.load(f"models/{INSTRUMENT}_model_1s_vol.joblib")
     
     def __init__(self):
-        super(MarketMakingBot, self).__init__()
+        super(MarketMakingBot, self).__init__(test = config.TEST_EXCHANGE)
         
         # get authorization for the first time
         self.getauth()
@@ -198,7 +199,7 @@ class MarketMakingBot(DeriBit):
                 book = self.request_data(substract_own_orders=True)
                 direction, volatility = self.forecast()
                 
-                self.get_index_price(config_dict[""])
+                print(self.get_index_price(config_dict["assert"].lower() + "_usd"))
 
             # refresh quotes and replace them
             # the structure is, get: position, orders, book, replace orders
