@@ -1,3 +1,6 @@
+# Support
+If you found this project in any way to be useful, please consider using my referral link to sign-up at Deribit: https://www.deribit.com/?reg=18056.5833. This will reduce your fees for the first 6-months of trading and would help me as well. 
+
 # deribit-marketmaker-rest
 A market making algorithm based on the Avellaneda Stoikov paper on Deribit derivatives exchange. A gradient boosted model is used for volatility and directional estimates to adjust the spread and skew the quotes. 
 
